@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Stock Control System</title>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-auth-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-firestore-compat.min.js"></script>
+    
+    <!-- PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- Excel Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .header-left h1 {
+            font-size: 2.2em;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header-left p {
+            font-size: 1em;
+            opacity: 0.9;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .dashboard-dropdown {
+            position: relative;
+        }
+        
+        .dashboard-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .dashboard-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        
+        .dropdown-content {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: white;
+            min-width: 300px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            z-index: 1000;
+            display: none;
+            margin-top: 5px;
+        }
+        
+        .dropdown-content.show {
+            display: block;
+        }
+        
+        .dropdown-search {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .dropdown-search input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+        
+        .dropdown-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            color: #2c3e50;
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .dropdown-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .dropdown-item:last-child {
+            border-radius: 0 0 10px 10px;
+        }
+        
+        .user-info {
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 3px solid #e9ecef;
+            overflow-x: auto;
+        }
+        
+        .nav-tab {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 20px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+            min-width: 150px;
+        }
+        
+        .nav-tab.active {
+            background: white;
+            color: #2c3e50;
+            border-bottom-color: #3498db;
+            transform: translateY(-2px);
+        }
+        
+        .nav-tab:hover:not(.active) {
+            background: #e9ecef;
+            transform: translateY(-1px);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 30px;
+            max-height: calc(100vh - 300px);
+            overflow-y: auto;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            position: relative;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.95em;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+        
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            background: white;
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .searchable-select {
+            position: relative;
+        }
+        
+        .searchable-select input {
+            cursor: pointer;
+        }
+        
+        .select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+        
+        .select-dropdown.show {
+            display: block;
+        }
+        
+        .select-option {
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        
+        .select-option:hover {
+            background: #f8f9fa;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
+        }
+        
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.85em;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            font-size: 0.9em;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+            color: white;
+            padding: 12px 10px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            font-size: 0.85em;
+        }
+        
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #e9ecef;
+            transition: background 0.2s ease;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.75em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-low {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .status-normal {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .status-expired {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+        
+        .status-pending {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .status-approved {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .status-rejected {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .filters > div {
+            min-width: 180px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.2);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+        
+        .stat-card h3 {
+            font-size: 2.2em;
+            margin-bottom: 8px;
+        }
+        
+        .stat-card p {
+            font-size: 1em;
+            opacity: 0.9;
+        }
+        
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffeaa7;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+        
+        .login-container {
+            max-width: 500px;
+            margin: 50px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .modal-header h3 {
+            color: #2c3e50;
+            margin: 0;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .close-btn:hover {
+            color: #333;
+        }
+        
+        .comment-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .comment {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .comment-meta {
+            font-size: 0.8em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .notification-badge {
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 0.7em;
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            min-width: 18px;
+            text-align: center;
+        }
+        
+        .validation-error {
+            color: #e74c3c;
+            font-size: 0.8em;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .analytics-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .header-right {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            .nav-tab {
+                min-width: auto;
+            }
+            
+            .tab-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-header" style="text-align: center; margin-bottom: 30px;">
+            <h2 style="color: #2c3e50; margin-bottom: 10px;">🏥 Medical Stock Control</h2>
+            <p>Please log in to continue</p>
+            <div id="connectionStatus" style="margin-top: 10px; font-size: 0.9em;"></div>
+        </div>
+        
+        <!-- Admin Login -->
+        <div id="adminLogin">
+            <h3 style="margin-bottom: 15px; color: #2c3e50;">Administrator Login</h3>
+            <div class="form-group">
+                <label for="adminUsername">Username:</label>
+                <input type="text" id="adminUsername" placeholder="Enter username">
+            </div>
+            <div class="form-group">
+                <label for="adminPassword">Password:</label>
+                <input type="password" id="adminPassword" placeholder="Password">
+            </div>
+            <button class="btn" onclick="loginAsAdmin()" id="adminLoginBtn">
+                <span class="loading hidden"></span>Login as Admin
+            </button>
+        </div>
+        
+        <div style="text-align: center; margin: 20px 0; color: #666;">OR</div>
+        
+        <!-- Facility Login -->
+        <div id="facilityLogin">
+            <h3 style="margin-bottom: 15px; color: #2c3e50;">Facility User Login</h3>
+            <div class="form-group">
+                <label for="facilityUsername">Username:</label>
+                <input type="text" id="facilityUsername" placeholder="Enter username">
+            </div>
+            <div class="form-group">
+                <label for="facilityPassword">Password:</label>
+                <input type="password" id="facilityPassword" placeholder="Password">
+            </div>
+            <button class="btn" onclick="loginAsFacility()" id="facilityLoginBtn">
+                <span class="loading hidden"></span>Login to Facility
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="mainApp" class="container hidden">
+        <div class="header">
+            <div class="header-left">
+                <h1>🏥 Medical Stock Control System</h1>
+                <p>Weekly Reporting & Inventory Management</p>
+            </div>
+            <div class="header-right">
+                <!-- Dashboard Dropdown -->
+                <div class="dashboard-dropdown">
+                    <button class="dashboard-btn" onclick="toggleDashboard()">
+                        📊 Dashboard <span id="notificationBadge" class="notification-badge hidden">0</span> ▼
+                    </button>
+                    <div id="dashboardDropdown" class="dropdown-content">
+                        <div class="dropdown-search">
+                            <input type="text" id="dashboardSearch" placeholder="Search pages..." onkeyup="filterDashboardItems()">
+                        </div>
+                        <div class="dropdown-item" onclick="showTabFromDropdown('submit')">📝 Submit Report</div>
+                        <div class="dropdown-item" onclick="showTabFromDropdown('view')">📊 View Reports</div>
+                        <div class="dropdown-item" onclick="showTabFromDropdown('commodities')">📦 Manage Commodities</div>
+                        <div class="dropdown-item" onclick="showTabFromDropdown('analytics')">📈 Analytics</div>
+                        <div class="dropdown-item admin-only hidden" onclick="showTabFromDropdown('admin')">⚙️ Admin Dashboard</div>
+                        <div class="dropdown-item admin-only hidden" onclick="showTabFromDropdown('adminReports')">📋 All Reports</div>
+                        <div class="dropdown-item admin-only hidden" onclick="showTabFromDropdown('adminCommodities')">🗃️ All Commodities</div>
+                        <div class="dropdown-item admin-only hidden" onclick="showTabFromDropdown('notifications')">🔔 Notifications</div>
+                    </div>
+                </div>
+                
+                <div class="user-info">
+                    <span id="currentUser"></span>
+                    <button class="btn btn-sm" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('submit', this)">📝 Submit Report</button>
+            <button class="nav-tab" onclick="showTab('view', this)">📊 View Reports</button>
+            <button class="nav-tab" onclick="showTab('commodities', this)">📦 Commodities</button>
+            <button class="nav-tab" onclick="showTab('analytics', this)">📈 Analytics</button>
+            <button class="nav-tab hidden admin-only" onclick="showTab('admin', this)">⚙️ Admin</button>
+        </div>
+
+        <!-- Submit Report Tab -->
+        <div id="submit" class="tab-content active">
+            <h2 style="margin-bottom: 25px; color: #2c3e50;">📝 Submit Weekly Stock Report</h2>
+            
+            <form id="stockForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="reportWeek">Report Week: <span style="color: red;">*</span></label>
+                        <input type="week" id="reportWeek" required>
+                        <div class="validation-error" id="reportWeekError"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="commodity">Commodity Name: <span style="color: red;">*</span></label>
+                        <div class="searchable-select">
+                            <input type="text" id="commodity" placeholder="Search or type commodity name..." required readonly onclick="toggleCommodityDropdown()">
+                            <div id="commodityDropdown" class="select-dropdown">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+                        <div class="validation-error" id="commodityError"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="expiryDate">Expiry Date: <span style="color: red;">*</span></label>
+                        <input type="date" id="expiryDate" required>
+                        <div class="validation-error" id="expiryDateError"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="openingBalance">Opening Balance: <span style="color: red;">*</span></label>
+                        <input type="number" id="openingBalance" placeholder="0" min="0" required>
+                        <div class="validation-error" id="openingBalanceError"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="received">Received: <span style="color: red;">*</span></label>
+                        <input type="number" id="received" placeholder="0" min="0" required>
+                        <div class="validation-error" id="receivedError"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="used">Used: <span style="color: red;">*</span></label>
+                        <input type="number" id="used" placeholder="0" min="0" required>
+                        <div class="validation-error" id="usedError"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="givenToOthers">Given to Other Facilities:</label>
+                        <input type="number" id="givenToOthers" placeholder="0" min="0">
+                        <div class="validation-error" id="givenToOthersError"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="balance">Current Balance:</label>
+                        <input type="number" id="balance" placeholder="0" min="0" readonly style="background: #e9ecef;">
+                        <div class="validation-error" id="balanceError"></div>
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="remarks">Remarks/Notes:</label>
+                        <textarea id="remarks" rows="3" placeholder="Any additional notes..."></textarea>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-success" id="submitBtn">
+                    <span class="loading hidden"></span>💾 Submit Report
+                </button>
+            </form>
+        </div>
+
+        <!-- View Reports Tab -->
+        <div id="view" class="tab-content">
+            <h2 style="margin-bottom: 25px; color: #2c3e50;">📊 Stock Reports</h2>
+            
+            <div class="filters">
+                <div class="form-group">
+                    <label for="filterWeek">Filter by Week:</label>
+                    <input type="week" id="filterWeek">
+                </div>
+                <div class="form-group">
+                    <label for="filterCommodity">Filter by Commodity:</label>
+                    <input type="text" id="filterCommodity" placeholder="Search commodity...">
+                </div>
+                <div class="form-group">
+                    <label for="filterStatus">Filter by Status:</label>
+                    <select id="filterStatus">
+                        <option value="">All Status</option>
+                        <option value="normal">Normal</option>
+                        <option value="low">Low Stock</option>
+                        <option value="expired">Expired</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                </div>
+                <div>
+                    <button class="btn" onclick="applyFilters()">🔍 Apply Filters</button>
+                    <button class="btn" onclick="clearFilters()">🗑️ Clear</button>
+                    <button class="btn" onclick="refreshReports()">🔄 Refresh</button>
+                </div>
+            </div>
+
+            <div class="export-buttons">
+                <button class="btn btn-success" onclick="exportToPDF('reports')">📄 Export PDF</button>
+                <button class="btn btn-success" onclick="exportToExcel('reports')">📊 Export Excel</button>
+            </div>
+
+            <div class="table-container">
+                <table id="reportsTable">
+                    <thead>
+                        <tr>
+                            <th>Week</th>
+                            <th>Facility</th>
+                            <th>Commodity</th>
+                            <th>Expiry Date</th>
+                            <th>Opening</th>
+                            <th>Received</th>
+                            <th>Used</th>
+                            <th>Given Out</th>
+                            <th>Balance</th>
+                            <th>Status</th>
+                            <th>Submitted</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportsTableBody">
+                        <tr><td colspan="12" style="text-align: center; color: #666;">Loading reports...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
