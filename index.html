@@ -748,33 +748,44 @@
             document.getElementById('loginForm').classList.remove('hidden');
         }
 
-        function login(event) {
-            event.preventDefault();
-            const username = document.getElementById('loginUsername').value;
-            const password = document.getElementById('loginPassword').value;
+        // Replace the existing login function with this:
+function login(event) {
+  event.preventDefault();
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value.trim();
 
-            const user = users.find(u => u.username === username && u.password === password);
-            
-            if (user) {
-                if (user.status === 'approved') {
-                    currentUser = user;
-                    document.getElementById('authSection').classList.add('hidden');
-                    document.getElementById('mainSystem').classList.remove('hidden');
-                    document.getElementById('currentUser').textContent = user.name;
-                    
-                    if (user.role === 'coordinator') {
-                        document.getElementById('manageTab').style.display = 'block';
-                    }
-                    
-                    loadDashboard();
-                    populateDropdowns();
-                } else {
-                    alert('Your account is pending approval. Please contact the administrator.');
-                }
-            } else {
-                alert('Invalid username or password');
-            }
-        }
+  // Debug output
+  console.log("Login attempt with:", { username, password });
+  
+  const users = JSON.parse(localStorage.getItem('msms_users')) || [];
+  const user = users.find(u => u.username === username && u.password === password);
+
+  if (user) {
+    if (user.status === 'approved') {
+      console.log("Login successful for:", user.name);
+      currentUser = user;
+      document.getElementById('authSection').classList.add('hidden');
+      document.getElementById('mainSystem').classList.remove('hidden');
+      document.getElementById('currentUser').textContent = user.name;
+      
+      if (user.role === 'coordinator') {
+        document.getElementById('manageTab').style.display = 'block';
+      }
+      
+      loadDashboard();
+      populateDropdowns();
+      return true;
+    } else {
+      alert('Account pending approval. Contact administrator.');
+    }
+  } else {
+    alert('Invalid credentials. Try:\nUsername: admin\nPassword: admin123');
+  }
+  return false;
+}
+
+// Ensure handler is properly attached
+document.getElementById('loginForm').onsubmit = login;
 
         function signup(event) {
             event.preventDefault();
