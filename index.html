@@ -1,0 +1,1850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NACS - Medical Stock Control System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.2em;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+
+        .auth-container, .main-app {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            margin-bottom: 20px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 5px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px 20px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .auth-tab.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .navigation {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .nav-item {
+            padding: 10px 20px;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .content-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        table th, table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        table th {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-approved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .card h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .alert {
+            padding: 12px 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .user-info {
+            text-align: right;
+            padding: 10px 0;
+            color: #2c3e50;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .auth-container, .main-app {
+                padding: 20px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .navigation {
+                flex-direction: column;
+            }
+
+            table {
+                font-size: 14px;
+            }
+        }
+
+        .commodity-input {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 2px solid #e9ecef;
+        }
+
+        .commodity-input:focus-within {
+            border-color: #667eea;
+        }
+
+        .commodity-header {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .input-row input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .calculation-result {
+            background: #e9ecef;
+            padding: 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>NACS</h1>
+            <p>National AIDS Control System - Medical Stock Control System</p>
+        </div>
+
+        <!-- Authentication Section -->
+        <div id="authSection" class="auth-container">
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchAuthTab('signin')">Sign In</button>
+                <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
+            </div>
+
+            <!-- Sign In Form -->
+            <div id="signinForm">
+                <h2 style="text-align: center; margin-bottom: 30px; color: #2c3e50;">Welcome Back</h2>
+                <div class="form-group">
+                    <label for="signinUsername">Username</label>
+                    <input type="text" id="signinUsername" placeholder="Enter your username" required>
+                </div>
+                <div class="form-group">
+                    <label for="signinPassword">Password</label>
+                    <input type="password" id="signinPassword" placeholder="Enter your password" required>
+                </div>
+                <button class="btn btn-primary" onclick="signIn()" style="width: 100%;">Sign In</button>
+            </div>
+
+            <!-- Sign Up Form -->
+            <div id="signupForm" class="hidden">
+                <h2 style="text-align: center; margin-bottom: 30px; color: #2c3e50;">Create Account</h2>
+                <div class="form-group">
+                    <label for="signupFullName">Full Name</label>
+                    <input type="text" id="signupFullName" placeholder="Enter your full name" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupUsername">Username</label>
+                    <input type="text" id="signupUsername" placeholder="Choose a username" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" placeholder="Create a password" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupEmail">Email</label>
+                    <input type="email" id="signupEmail" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupPhone">Phone Number</label>
+                    <input type="tel" id="signupPhone" placeholder="Enter your phone number" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupProvince">Province</label>
+                    <select id="signupProvince" onchange="loadHubs()" required>
+                        <option value="">Select Province</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="signupHub">Hub</label>
+                    <select id="signupHub" onchange="loadDistricts()" required>
+                        <option value="">Select Hub</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="signupDistrict">District</label>
+                    <select id="signupDistrict" onchange="loadFacilities()" required>
+                        <option value="">Select District</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="signupFacility">Health Facility</label>
+                    <select id="signupFacility" required>
+                        <option value="">Select Facility</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="signUp()" style="width: 100%;">Request Account</button>
+                <p style="text-align: center; margin-top: 15px; color: #7f8c8d;">
+                    Account approval required from administrator
+                </p>
+            </div>
+        </div>
+
+        <!-- Main Application -->
+        <div id="mainApp" class="main-app hidden">
+            <div class="user-info">
+                <span>Welcome, <strong id="currentUserName"></strong> (<span id="currentUserRole"></span>)</span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+
+            <div class="navigation" id="navigation">
+                <!-- Navigation will be dynamically populated based on user role -->
+            </div>
+
+            <div id="alertContainer"></div>
+
+            <!-- Submit Report Section -->
+            <div id="submitReportSection" class="content-section">
+                <h2>Submit Weekly Report</h2>
+                <div class="form-group">
+                    <label for="reportWeek">Reporting Week</label>
+                    <input type="week" id="reportWeek" required>
+                </div>
+                <div class="form-group">
+                    <label for="reportMonth">Month</label>
+                    <select id="reportMonth" required>
+                        <option value="">Select Month</option>
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="reportYear">Year</label>
+                    <input type="number" id="reportYear" min="2020" max="2030" required>
+                </div>
+                <div class="form-group">
+                    <label for="reporterName">Reporter Name</label>
+                    <input type="text" id="reporterName" placeholder="Enter your name" required>
+                </div>
+                <div class="form-group">
+                    <label for="reportFacility">Reporting Facility</label>
+                    <select id="reportFacility" required>
+                        <option value="">Select Facility</option>
+                    </select>
+                </div>
+
+                <h3 style="margin: 30px 0 20px 0; color: #2c3e50;">Commodity Reports</h3>
+                <div id="commodityReports">
+                    <!-- Commodity inputs will be dynamically generated -->
+                </div>
+
+                <h3 style="margin: 30px 0 20px 0; color: #2c3e50;">Client Statistics</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>Weekly Client Data</h4>
+                        <div class="form-group">
+                            <label>Clients Seen in Reporting Week</label>
+                            <input type="number" id="clientsSeen" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Due for Drug Delivery</label>
+                            <input type="number" id="dueForDelivery" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Given 6MMD</label>
+                            <input type="number" id="given6MMD" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Given 3-5MMD</label>
+                            <input type="number" id="given3to5MMD" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Given Less than 3MMD</label>
+                            <input type="number" id="givenLess3MMD" min="0">
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h4>VL & Treatment Data</h4>
+                        <div class="form-group">
+                            <label>Total Clients Due for VL</label>
+                            <input type="number" id="totalDueVL" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Total VL Samples Collected</label>
+                            <input type="number" id="totalVLSamples" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Total TPT Initiations</label>
+                            <input type="number" id="totalTPTInitiations" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>pDTG-CURR Transitioned to PALD</label>
+                            <input type="number" id="pdtgToPald" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Total on PALD</label>
+                            <input type="number" id="totalOnPald" min="0">
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h4>3HP & NACS Data</h4>
+                        <div class="form-group">
+                            <label>SOH 3HP Weekly Initiations</label>
+                            <input type="number" id="soh3HPWeekly" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>FY on 3HP Cumulative</label>
+                            <input type="number" id="fy3HPCumulative" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>NACS Total Screened</label>
+                            <input type="number" id="nacsScreened" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Eligible for HEPS</label>
+                            <input type="number" id="eligibleHEPS" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>HEPS Given to Clients</label>
+                            <input type="number" id="hepsGivenClients" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Total Refill</label>
+                            <input type="number" id="totalRefill" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>HEPS Given to Other Dept</label>
+                            <input type="number" id="hepsGivenOtherDept" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>HEPS Stock on Hand</label>
+                            <input type="number" id="hepsStockOnHand" min="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin: 30px 0; text-align: center;">
+                    <button class="btn btn-secondary" onclick="previewReport()">Preview Report</button>
+                    <button class="btn btn-primary" onclick="submitReport()">Submit Report</button>
+                    <button class="btn btn-warning" onclick="saveAsDraft()">Save as Draft</button>
+                </div>
+            </div>
+
+            <!-- View Reports Section -->
+            <div id="viewReportsSection" class="content-section">
+                <h2>View Reports</h2>
+                <div class="form-group">
+                    <label>Filter by Status</label>
+                    <select id="reportStatusFilter" onchange="filterReports()">
+                        <option value="">All Reports</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="draft">Draft</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table id="reportsTable">
+                        <thead>
+                            <tr>
+                                <th>Report ID</th>
+                                <th>Week</th>
+                                <th>Month/Year</th>
+                                <th>Facility</th>
+                                <th>Reporter</th>
+                                <th>Status</th>
+                                <th>Submitted</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Admin Sections -->
+            <div id="manageUsersSection" class="content-section">
+                <h2>Manage Users</h2>
+                <div class="table-container">
+                    <table id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>Full Name</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Facility</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="manageFacilitiesSection" class="content-section">
+                <h2>Manage Facilities</h2>
+                <div class="grid">
+                    <div class="card">
+                        <h3>Add New Facility</h3>
+                        <div class="form-group">
+                            <label>Province</label>
+                            <select id="newFacilityProvince" onchange="loadNewFacilityHubs()">
+                                <option value="">Select Province</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Hub</label>
+                            <select id="newFacilityHub" onchange="loadNewFacilityDistricts()">
+                                <option value="">Select Hub</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>District</label>
+                            <select id="newFacilityDistrict">
+                                <option value="">Select District</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Facility Name</label>
+                            <input type="text" id="newFacilityName" placeholder="Enter facility name">
+                        </div>
+                        <div class="form-group">
+                            <label>Facility Code</label>
+                            <input type="text" id="newFacilityCode" placeholder="Enter facility code">
+                        </div>
+                        <button class="btn btn-primary" onclick="addFacility()">Add Facility</button>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table id="facilitiesTable">
+                        <thead>
+                            <tr>
+                                <th>Facility Name</th>
+                                <th>Code</th>
+                                <th>District</th>
+                                <th>Hub</th>
+                                <th>Province</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="facilitiesTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="manageCommoditiesSection" class="content-section">
+                <h2>Manage Commodities</h2>
+                <div class="card">
+                    <h3>Add New Commodity</h3>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="newCommodityCategory">
+                            <option value="">Select Category</option>
+                            <option value="ARVs">ARVs</option>
+                            <option value="HIV Testing Kits">HIV Testing Kits</option>
+                            <option value="Non-Medical Items">Non-Medical Items</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Commodity Name</label>
+                        <input type="text" id="newCommodityName" placeholder="Enter commodity name">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="newCommodityDescription" placeholder="Enter description"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Unit of Measurement</label>
+                        <input type="text" id="newCommodityUnit" placeholder="e.g., bottles, kits, pieces">
+                    </div>
+                    <button class="btn btn-primary" onclick="addCommodity()">Add Commodity</button>
+                </div>
+                
+                <div class="table-container">
+                    <table id="commoditiesTable">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Unit</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="commoditiesTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentUser = null;
+        let currentUserRole = null;
+        let facilityData = {
+            provinces: [],
+            hubs: {},
+            districts: {},
+            facilities: {}
+        };
+        let commodities = [];
+        let users = [];
+        let reports = [];
+
+        // Initialize application
+        function initApp() {
+            // Set current year as default
+            document.getElementById('reportYear').value = new Date().getFullYear();
+            
+            // Initialize sample data
+            initializeSampleData();
+            
+            // Check if user is logged in
+            checkUserSession();
+        }
+
+        function initializeSampleData() {
+            // Sample facility structure
+            facilityData = {
+                provinces: ['Lusaka', 'Copperbelt', 'Northern', 'Western', 'Eastern', 'Southern', 'Central', 'North Western', 'Muchinga'],
+                hubs: {
+                    'Lusaka': ['Lusaka Hub'],
+                    'Copperbelt': ['Kitwe Hub', 'Ndola Hub'],
+                    'Northern': ['Kasama Hub'],
+                    'Western': ['Mongu Hub'],
+                    'Eastern': ['Chipata Hub'],
+                    'Southern': ['Livingstone Hub'],
+                    'Central': ['Kabwe Hub'],
+                    'North Western': ['Solwezi Hub'],
+                    'Muchinga': ['Chinsali Hub']
+                },
+                districts: {
+                    'Lusaka Hub': ['Lusaka', 'Chilanga', 'Kafue'],
+                    'Kitwe Hub': ['Kitwe', 'Kalulushi'],
+                    'Ndola Hub': ['Ndola', 'Luanshya', 'Masaiti'],
+                    'Kasama Hub': ['Kasama', 'Mbala'],
+                    'Mongu Hub': ['Mongu', 'Senanga'],
+                    'Chipata Hub': ['Chipata', 'Lundazi'],
+                    'Livingstone Hub': ['Livingstone', 'Kazungula'],
+                    'Kabwe Hub': ['Kabwe', 'Kapiri Mposhi'],
+                    'Solwezi Hub': ['Solwezi', 'Mwinilunga'],
+                    'Chinsali Hub': ['Chinsali', 'Mpika']
+                },
+                facilities: {
+                    'Lusaka': ['University Teaching Hospital', 'Lusaka District Hospital', 'Matero Clinic'],
+                    'Chilanga': ['Chilanga District Hospital'],
+                    'Kafue': ['Kafue District Hospital'],
+                    'Kitwe': ['Kitwe Central Hospital', 'Wusakile Clinic'],
+                    'Kalulushi': ['Kalulushi Mine Hospital'],
+                    'Ndola': ['Arthur Davison Hospital', 'Ndola Central Hospital', 'Levy Mwanawasa Hospital'],
+                    'Luanshya': ['Luanshya Mine Hospital'],
+                    'Masaiti': ['Masaiti District Hospital'],
+                    'Kasama': ['Kasama General Hospital'],
+                    'Mbala': ['Mbala District Hospital'],
+                    'Mongu': ['Lewanika General Hospital'],
+                    'Senanga': ['Senanga District Hospital'],
+                    'Chipata': ['Chipata General Hospital'],
+                    'Lundazi': ['Lundazi District Hospital'],
+                    'Livingstone': ['Livingstone General Hospital'],
+                    'Kazungula': ['Kazungula District Hospital'],
+                    'Kabwe': ['Kabwe General Hospital'],
+                    'Kapiri Mposhi': ['Kapiri Mposhi District Hospital'],
+                    'Solwezi': ['Solwezi General Hospital'],
+                    'Mwinilunga': ['Mwinilunga District Hospital'],
+                    'Chinsali': ['Chinsali District Hospital'],
+                    'Mpika': ['Mpika District Hospital']
+                }
+            };
+
+            // Sample commodities
+            commodities = [
+                // ARVs
+                { id: 1, category: 'ARVs', name: 'TLD (Tenofovir/Lamivudine/Dolutegravir)', description: '30 tablets per bottle', unit: 'bottles' },
+                { id: 2, category: 'ARVs', name: 'TLE (Tenofovir/Lamivudine/Efavirenz)', description: '30 tablets per bottle', unit: 'bottles' },
+                { id: 3, category: 'ARVs', name: 'ABC/3TC (Abacavir/Lamivudine)', description: '30 tablets per bottle', unit: 'bottles' },
+                { id: 4, category: 'ARVs', name: 'DTG (Dolutegravir) 50mg', description: '30 tablets per bottle', unit: 'bottles' },
+                { id: 5, category: 'ARVs', name: 'EFV (Efavirenz) 600mg', description: '30 tablets per bottle', unit: 'bottles' },
+                { id: 6, category: 'ARVs', name: 'LPV/r (Lopinavir/Ritonavir)', description: '120 tablets per bottle', unit: 'bottles' },
+                { id: 7, category: 'ARVs', name: 'AZT/3TC (Zidovudine/Lamivudine)', description: '60 tablets per bottle', unit: 'bottles' },
+                { id: 8, category: 'ARVs', name: 'NVP (Nevirapine) 200mg', description: '60 tablets per bottle', unit: 'bottles' },
+                
+                // HIV Testing Kits
+                { id: 9, category: 'HIV Testing Kits', name: 'Determine HIV-1/2', description: 'Rapid test kit', unit: 'kits' },
+                { id: 10, category: 'HIV Testing Kits', name: 'Uni-Gold HIV', description: 'Rapid test kit', unit: 'kits' },
+                { id: 11, category: 'HIV Testing Kits', name: 'SD Bioline HIV-1/2', description: 'Rapid test kit', unit: 'kits' },
+                { id: 12, category: 'HIV Testing Kits', name: 'ELISA HIV Test Kit', description: 'Laboratory test kit', unit: 'kits' },
+                { id: 13, category: 'HIV Testing Kits', name: 'DNA PCR Test Kit', description: 'Molecular test kit', unit: 'kits' },
+                
+                // Non-Medical Items
+                { id: 14, category: 'Non-Medical Items', name: 'Gloves (Latex)', description: 'Disposable examination gloves', unit: 'boxes' },
+                { id: 15, category: 'Non-Medical Items', name: 'Syringes 5ml', description: 'Disposable syringes', unit: 'pieces' },
+                { id: 16, category: 'Non-Medical Items', name: 'Cotton Wool', description: 'Medical grade cotton', unit: 'rolls' },
+                { id: 17, category: 'Non-Medical Items', name: 'Alcohol Swabs', description: 'Sterile alcohol prep pads', unit: 'boxes' },
+                { id: 18, category: 'Non-Medical Items', name: 'Lancets', description: 'Disposable blood lancets', unit: 'boxes' },
+                { id: 19, category: 'Non-Medical Items', name: 'Blood Collection Tubes', description: 'EDTA tubes', unit: 'pieces' },
+                { id: 20, category: 'Non-Medical Items', name: 'Face Masks', description: 'Surgical face masks', unit: 'boxes' }
+            ];
+
+            // Sample users with different roles
+            users = [
+                { 
+                    id: 1, 
+                    username: 'admin', 
+                    password: 'admin123', 
+                    fullName: 'System Administrator', 
+                    email: 'admin@nacs.gov.zm', 
+                    phone: '+260977123456',
+                    role: 'admin', 
+                    status: 'approved',
+                    province: 'Lusaka',
+                    hub: 'Lusaka Hub',
+                    district: 'Lusaka',
+                    facility: 'Ministry of Health HQ'
+                },
+                { 
+                    id: 2, 
+                    username: 'provincial_coord', 
+                    password: 'coord123', 
+                    fullName: 'Provincial Coordinator', 
+                    email: 'coord@nacs.gov.zm', 
+                    phone: '+260977123457',
+                    role: 'provincial_coordinator', 
+                    status: 'approved',
+                    province: 'Lusaka',
+                    hub: 'Lusaka Hub',
+                    district: 'Lusaka',
+                    facility: 'Provincial Health Office'
+                },
+                { 
+                    id: 3, 
+                    username: 'district_coord', 
+                    password: 'district123', 
+                    fullName: 'District Coordinator', 
+                    email: 'district@nacs.gov.zm', 
+                    phone: '+260977123458',
+                    role: 'district_coordinator', 
+                    status: 'approved',
+                    province: 'Lusaka',
+                    hub: 'Lusaka Hub',
+                    district: 'Lusaka',
+                    facility: 'District Health Office'
+                },
+                { 
+                    id: 4, 
+                    username: 'facility_user', 
+                    password: 'facility123', 
+                    fullName: 'Facility Reporter', 
+                    email: 'facility@uth.gov.zm', 
+                    phone: '+260977123459',
+                    role: 'facility_user', 
+                    status: 'approved',
+                    province: 'Lusaka',
+                    hub: 'Lusaka Hub',
+                    district: 'Lusaka',
+                    facility: 'University Teaching Hospital'
+                }
+            ];
+
+            // Sample reports
+            reports = [
+                {
+                    id: 1,
+                    week: '2025-W05',
+                    month: 2,
+                    year: 2025,
+                    facility: 'University Teaching Hospital',
+                    reporter: 'John Mwansa',
+                    status: 'pending',
+                    submittedDate: '2025-02-05',
+                    commodityData: {},
+                    clientData: {}
+                }
+            ];
+
+            // Populate dropdowns
+            populateProvinces();
+            populateCommodityDropdowns();
+        }
+
+        function populateProvinces() {
+            const provinceSelects = document.querySelectorAll('#signupProvince, #newFacilityProvince');
+            provinceSelects.forEach(select => {
+                select.innerHTML = '<option value="">Select Province</option>';
+                facilityData.provinces.forEach(province => {
+                    select.innerHTML += `<option value="${province}">${province}</option>`;
+                });
+            });
+        }
+
+        function populateCommodityDropdowns() {
+            // This will be called when generating commodity report forms
+        }
+
+        function checkUserSession() {
+            // In a real application, this would check for stored session
+            // For demo purposes, we'll start with the login screen
+        }
+
+        // Authentication functions
+        function switchAuthTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`[onclick="switchAuthTab('${tab}')"]`).classList.add('active');
+            
+            if (tab === 'signin') {
+                document.getElementById('signinForm').classList.remove('hidden');
+                document.getElementById('signupForm').classList.add('hidden');
+            } else {
+                document.getElementById('signinForm').classList.add('hidden');
+                document.getElementById('signupForm').classList.remove('hidden');
+            }
+        }
+
+        function signIn() {
+            const username = document.getElementById('signinUsername').value;
+            const password = document.getElementById('signinPassword').value;
+
+            if (!username || !password) {
+                showAlert('Please enter both username and password', 'error');
+                return;
+            }
+
+            const user = users.find(u => u.username === username && u.password === password && u.status === 'approved');
+            
+            if (user) {
+                currentUser = user;
+                currentUserRole = user.role;
+                document.getElementById('currentUserName').textContent = user.fullName;
+                document.getElementById('currentUserRole').textContent = user.role.replace('_', ' ').toUpperCase();
+                
+                document.getElementById('authSection').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                
+                setupNavigation();
+                loadUserFacilities();
+                showAlert('Welcome back!', 'success');
+            } else {
+                showAlert('Invalid credentials or account not approved', 'error');
+            }
+        }
+
+        function signUp() {
+            const userData = {
+                fullName: document.getElementById('signupFullName').value,
+                username: document.getElementById('signupUsername').value,
+                password: document.getElementById('signupPassword').value,
+                email: document.getElementById('signupEmail').value,
+                phone: document.getElementById('signupPhone').value,
+                province: document.getElementById('signupProvince').value,
+                hub: document.getElementById('signupHub').value,
+                district: document.getElementById('signupDistrict').value,
+                facility: document.getElementById('signupFacility').value
+            };
+
+            // Validate required fields
+            for (let field in userData) {
+                if (!userData[field]) {
+                    showAlert(`Please fill in ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`, 'error');
+                    return;
+                }
+            }
+
+            // Check if username already exists
+            if (users.find(u => u.username === userData.username)) {
+                showAlert('Username already exists', 'error');
+                return;
+            }
+
+            // Add new user (pending approval)
+            const newUser = {
+                id: users.length + 1,
+                ...userData,
+                role: 'facility_user',
+                status: 'pending'
+            };
+
+            users.push(newUser);
+            showAlert('Account request submitted successfully. Awaiting approval.', 'success');
+            
+            // Clear form
+            document.getElementById('signupForm').querySelectorAll('input, select').forEach(input => {
+                input.value = '';
+            });
+        }
+
+        function logout() {
+            currentUser = null;
+            currentUserRole = null;
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+            
+            // Clear forms
+            document.querySelectorAll('input, select, textarea').forEach(input => {
+                if (input.type !== 'button' && input.type !== 'submit') {
+                    input.value = '';
+                }
+            });
+        }
+
+        // Navigation setup
+        function setupNavigation() {
+            const navigation = document.getElementById('navigation');
+            navigation.innerHTML = '';
+
+            const navItems = getNavigationItems();
+            navItems.forEach(item => {
+                const navElement = document.createElement('div');
+                navElement.className = 'nav-item';
+                navElement.textContent = item.label;
+                navElement.onclick = () => showSection(item.section);
+                navigation.appendChild(navElement);
+            });
+
+            // Show first section by default
+            if (navItems.length > 0) {
+                showSection(navItems[0].section);
+            }
+        }
+
+        function getNavigationItems() {
+            const baseItems = [];
+
+            if (currentUserRole === 'admin') {
+                return [
+                    { label: 'View All Reports', section: 'viewReportsSection' },
+                    { label: 'Manage Users', section: 'manageUsersSection' },
+                    { label: 'Manage Facilities', section: 'manageFacilitiesSection' },
+                    { label: 'Manage Commodities', section: 'manageCommoditiesSection' }
+                ];
+            } else if (currentUserRole === 'provincial_coordinator' || currentUserRole === 'district_coordinator') {
+                return [
+                    { label: 'View Reports', section: 'viewReportsSection' },
+                    { label: 'Manage Users', section: 'manageUsersSection' },
+                    { label: 'Manage Facilities', section: 'manageFacilitiesSection' },
+                    { label: 'Manage Commodities', section: 'manageCommoditiesSection' }
+                ];
+            } else {
+                return [
+                    { label: 'Submit Report', section: 'submitReportSection' },
+                    { label: 'View Reports', section: 'viewReportsSection' }
+                ];
+            }
+        }
+
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+
+            // Update navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Load section-specific data
+            loadSectionData(sectionId);
+        }
+
+        function loadSectionData(sectionId) {
+            switch (sectionId) {
+                case 'submitReportSection':
+                    loadUserFacilities();
+                    generateCommodityReportForm();
+                    break;
+                case 'viewReportsSection':
+                    loadReportsTable();
+                    break;
+                case 'manageUsersSection':
+                    loadUsersTable();
+                    break;
+                case 'manageFacilitiesSection':
+                    loadFacilitiesTable();
+                    populateProvinces();
+                    break;
+                case 'manageCommoditiesSection':
+                    loadCommoditiesTable();
+                    break;
+            }
+        }
+
+        // Facility management functions
+        function loadHubs() {
+            const province = document.getElementById('signupProvince').value;
+            const hubSelect = document.getElementById('signupHub');
+            hubSelect.innerHTML = '<option value="">Select Hub</option>';
+            
+            if (province && facilityData.hubs[province]) {
+                facilityData.hubs[province].forEach(hub => {
+                    hubSelect.innerHTML += `<option value="${hub}">${hub}</option>`;
+                });
+            }
+            
+            // Clear dependent dropdowns
+            document.getElementById('signupDistrict').innerHTML = '<option value="">Select District</option>';
+            document.getElementById('signupFacility').innerHTML = '<option value="">Select Facility</option>';
+        }
+
+        function loadDistricts() {
+            const hub = document.getElementById('signupHub').value;
+            const districtSelect = document.getElementById('signupDistrict');
+            districtSelect.innerHTML = '<option value="">Select District</option>';
+            
+            if (hub && facilityData.districts[hub]) {
+                facilityData.districts[hub].forEach(district => {
+                    districtSelect.innerHTML += `<option value="${district}">${district}</option>`;
+                });
+            }
+            
+            // Clear dependent dropdown
+            document.getElementById('signupFacility').innerHTML = '<option value="">Select Facility</option>';
+        }
+
+        function loadFacilities() {
+            const district = document.getElementById('signupDistrict').value;
+            const facilitySelect = document.getElementById('signupFacility');
+            facilitySelect.innerHTML = '<option value="">Select Facility</option>';
+            
+            if (district && facilityData.facilities[district]) {
+                facilityData.facilities[district].forEach(facility => {
+                    facilitySelect.innerHTML += `<option value="${facility}">${facility}</option>`;
+                });
+            }
+        }
+
+        // Similar functions for new facility form
+        function loadNewFacilityHubs() {
+            const province = document.getElementById('newFacilityProvince').value;
+            const hubSelect = document.getElementById('newFacilityHub');
+            hubSelect.innerHTML = '<option value="">Select Hub</option>';
+            
+            if (province && facilityData.hubs[province]) {
+                facilityData.hubs[province].forEach(hub => {
+                    hubSelect.innerHTML += `<option value="${hub}">${hub}</option>`;
+                });
+            }
+            
+            document.getElementById('newFacilityDistrict').innerHTML = '<option value="">Select District</option>';
+        }
+
+        function loadNewFacilityDistricts() {
+            const hub = document.getElementById('newFacilityHub').value;
+            const districtSelect = document.getElementById('newFacilityDistrict');
+            districtSelect.innerHTML = '<option value="">Select District</option>';
+            
+            if (hub && facilityData.districts[hub]) {
+                facilityData.districts[hub].forEach(district => {
+                    districtSelect.innerHTML += `<option value="${district}">${district}</option>`;
+                });
+            }
+        }
+
+        function loadUserFacilities() {
+            const facilitySelect = document.getElementById('reportFacility');
+            facilitySelect.innerHTML = '<option value="">Select Facility</option>';
+            
+            if (currentUserRole === 'facility_user') {
+                // Facility users can only report for their own facility
+                facilitySelect.innerHTML += `<option value="${currentUser.facility}">${currentUser.facility}</option>`;
+                facilitySelect.value = currentUser.facility;
+            } else {
+                // Coordinators and admins can report for any facility in their jurisdiction
+                let availableFacilities = [];
+                
+                if (currentUserRole === 'admin') {
+                    // Admin can access all facilities
+                    Object.values(facilityData.facilities).forEach(districtFacilities => {
+                        availableFacilities.push(...districtFacilities);
+                    });
+                } else if (currentUserRole === 'provincial_coordinator') {
+                    // Provincial coordinator can access facilities in their province
+                    const provincialDistricts = Object.keys(facilityData.facilities);
+                    provincialDistricts.forEach(district => {
+                        availableFacilities.push(...facilityData.facilities[district]);
+                    });
+                } else if (currentUserRole === 'district_coordinator') {
+                    // District coordinator can access facilities in their district
+                    availableFacilities = facilityData.facilities[currentUser.district] || [];
+                }
+                
+                availableFacilities.forEach(facility => {
+                    facilitySelect.innerHTML += `<option value="${facility}">${facility}</option>`;
+                });
+            }
+        }
+
+        // Commodity report generation
+        function generateCommodityReportForm() {
+            const container = document.getElementById('commodityReports');
+            container.innerHTML = '';
+
+            const categories = [...new Set(commodities.map(c => c.category))];
+            
+            categories.forEach(category => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.innerHTML = `
+                    <div class="commodity-header">${category}</div>
+                `;
+                
+                const categoryCommodities = commodities.filter(c => c.category === category);
+                categoryCommodities.forEach(commodity => {
+                    const commodityDiv = document.createElement('div');
+                    commodityDiv.className = 'commodity-input';
+                    commodityDiv.innerHTML = `
+                        <h4>${commodity.name} (${commodity.unit})</h4>
+                        <p style="color: #666; margin-bottom: 10px;">${commodity.description}</p>
+                        <div class="input-row">
+                            <div>
+                                <label>Expiry Date</label>
+                                <input type="date" id="expiry_${commodity.id}">
+                            </div>
+                            <div>
+                                <label>Balance at Opening</label>
+                                <input type="number" id="opening_${commodity.id}" min="0" onchange="calculateBalance(${commodity.id})">
+                            </div>
+                            <div>
+                                <label>Received</label>
+                                <input type="number" id="received_${commodity.id}" min="0" onchange="calculateBalance(${commodity.id})">
+                            </div>
+                            <div>
+                                <label>Used</label>
+                                <input type="number" id="used_${commodity.id}" min="0" onchange="calculateBalance(${commodity.id})">
+                            </div>
+                            <div>
+                                <label>Given to Other Facilities</label>
+                                <input type="number" id="given_${commodity.id}" min="0" onchange="calculateBalance(${commodity.id})">
+                            </div>
+                            <div>
+                                <label>Facility Name (if given)</label>
+                                <input type="text" id="givenTo_${commodity.id}" placeholder="Enter facility name">
+                            </div>
+                            <div>
+                                <label>Balance at Closing</label>
+                                <input type="number" id="closing_${commodity.id}" class="calculation-result" readonly>
+                            </div>
+                        </div>
+                    `;
+                    categoryDiv.appendChild(commodityDiv);
+                });
+                
+                container.appendChild(categoryDiv);
+            });
+        }
+
+        function calculateBalance(commodityId) {
+            const opening = parseFloat(document.getElementById(`opening_${commodityId}`).value) || 0;
+            const received = parseFloat(document.getElementById(`received_${commodityId}`).value) || 0;
+            const used = parseFloat(document.getElementById(`used_${commodityId}`).value) || 0;
+            const given = parseFloat(document.getElementById(`given_${commodityId}`).value) || 0;
+            
+            const balance = opening + received - used - given;
+            document.getElementById(`closing_${commodityId}`).value = Math.max(0, balance);
+        }
+
+        // Report management
+        function previewReport() {
+            if (!validateReportForm()) return;
+            
+            showAlert('Report preview generated successfully', 'success');
+            // In a real app, this would show a modal or new window with report preview
+        }
+
+        function validateReportForm() {
+            const requiredFields = ['reportWeek', 'reportMonth', 'reportYear', 'reporterName', 'reportFacility'];
+            
+            for (let field of requiredFields) {
+                const element = document.getElementById(field);
+                if (!element.value) {
+                    showAlert(`Please fill in ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`, 'error');
+                    element.focus();
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function submitReport() {
+            if (!validateReportForm()) return;
+            
+            const reportData = {
+                id: reports.length + 1,
+                week: document.getElementById('reportWeek').value,
+                month: document.getElementById('reportMonth').value,
+                year: document.getElementById('reportYear').value,
+                facility: document.getElementById('reportFacility').value,
+                reporter: document.getElementById('reporterName').value,
+                status: 'pending',
+                submittedDate: new Date().toISOString().split('T')[0],
+                commodityData: collectCommodityData(),
+                clientData: collectClientData()
+            };
+            
+            reports.push(reportData);
+            showAlert('Report submitted successfully', 'success');
+            clearReportForm();
+        }
+
+        function saveAsDraft() {
+            const reportData = {
+                id: reports.length + 1,
+                week: document.getElementById('reportWeek').value,
+                month: document.getElementById('reportMonth').value,
+                year: document.getElementById('reportYear').value,
+                facility: document.getElementById('reportFacility').value,
+                reporter: document.getElementById('reporterName').value,
+                status: 'draft',
+                submittedDate: new Date().toISOString().split('T')[0],
+                commodityData: collectCommodityData(),
+                clientData: collectClientData()
+            };
+            
+            reports.push(reportData);
+            showAlert('Report saved as draft', 'success');
+        }
+
+        function collectCommodityData() {
+            const commodityData = {};
+            commodities.forEach(commodity => {
+                commodityData[commodity.id] = {
+                    expiry: document.getElementById(`expiry_${commodity.id}`)?.value,
+                    opening: document.getElementById(`opening_${commodity.id}`)?.value,
+                    received: document.getElementById(`received_${commodity.id}`)?.value,
+                    used: document.getElementById(`used_${commodity.id}`)?.value,
+                    given: document.getElementById(`given_${commodity.id}`)?.value,
+                    givenTo: document.getElementById(`givenTo_${commodity.id}`)?.value,
+                    closing: document.getElementById(`closing_${commodity.id}`)?.value
+                };
+            });
+            return commodityData;
+        }
+
+        function collectClientData() {
+            return {
+                clientsSeen: document.getElementById('clientsSeen').value,
+                dueForDelivery: document.getElementById('dueForDelivery').value,
+                given6MMD: document.getElementById('given6MMD').value,
+                given3to5MMD: document.getElementById('given3to5MMD').value,
+                givenLess3MMD: document.getElementById('givenLess3MMD').value,
+                totalDueVL: document.getElementById('totalDueVL').value,
+                totalVLSamples: document.getElementById('totalVLSamples').value,
+                totalTPTInitiations: document.getElementById('totalTPTInitiations').value,
+                pdtgToPald: document.getElementById('pdtgToPald').value,
+                totalOnPald: document.getElementById('totalOnPald').value,
+                soh3HPWeekly: document.getElementById('soh3HPWeekly').value,
+                fy3HPCumulative: document.getElementById('fy3HPCumulative').value,
+                nacsScreened: document.getElementById('nacsScreened').value,
+                eligibleHEPS: document.getElementById('eligibleHEPS').value,
+                hepsGivenClients: document.getElementById('hepsGivenClients').value,
+                totalRefill: document.getElementById('totalRefill').value,
+                hepsGivenOtherDept: document.getElementById('hepsGivenOtherDept').value,
+                hepsStockOnHand: document.getElementById('hepsStockOnHand').value
+            };
+        }
+
+        function clearReportForm() {
+            document.querySelectorAll('#submitReportSection input, #submitReportSection select').forEach(input => {
+                if (input.type !== 'button') {
+                    input.value = '';
+                }
+            });
+        }
+
+        // Table management functions
+        function loadReportsTable() {
+            const tbody = document.getElementById('reportsTableBody');
+            tbody.innerHTML = '';
+            
+            let filteredReports = reports;
+            
+            // Filter by user role
+            if (currentUserRole === 'facility_user') {
+                filteredReports = reports.filter(r => r.facility === currentUser.facility);
+            }
+            
+            filteredReports.forEach(report => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${report.id}</td>
+                    <td>${report.week}</td>
+                    <td>${report.month}/${report.year}</td>
+                    <td>${report.facility}</td>
+                    <td>${report.reporter}</td>
+                    <td><span class="status-badge status-${report.status}">${report.status.toUpperCase()}</span></td>
+                    <td>${report.submittedDate}</td>
+                    <td>
+                        <button class="btn btn-primary" onclick="viewReport(${report.id})">View</button>
+                        <button class="btn btn-success" onclick="downloadReport(${report.id}, 'pdf')">PDF</button>
+                        <button class="btn btn-success" onclick="downloadReport(${report.id}, 'excel')">Excel</button>
+                        ${(currentUserRole !== 'facility_user') ? `
+                            <button class="btn btn-success" onclick="approveReport(${report.id})">Approve</button>
+                            <button class="btn btn-danger" onclick="rejectReport(${report.id})">Reject</button>
+                        ` : ''}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function loadUsersTable() {
+            if (currentUserRole === 'facility_user') return;
+            
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+            
+            users.forEach(user => {
+                if (user.role !== 'admin') { // Don't show admin users
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${user.fullName}</td>
+                        <td>${user.username}</td>
+                        <td>${user.email}</td>
+                        <td>${user.facility}</td>
+                        <td><span class="status-badge status-${user.status}">${user.status.toUpperCase()}</span></td>
+                        <td>
+                            ${user.status === 'pending' ? `
+                                <button class="btn btn-success" onclick="approveUser(${user.id})">Approve</button>
+                                <button class="btn btn-danger" onclick="rejectUser(${user.id})">Reject</button>
+                            ` : ''}
+                            <button class="btn btn-danger" onclick="deleteUser(${user.id})">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            });
+        }
+
+        function loadFacilitiesTable() {
+            const tbody = document.getElementById('facilitiesTableBody');
+            tbody.innerHTML = '';
+            
+            // Flatten facilities data for table display
+            Object.keys(facilityData.facilities).forEach(district => {
+                facilityData.facilities[district].forEach(facility => {
+                    // Find province and hub for this district
+                    let province = '';
+                    let hub = '';
+                    
+                    Object.keys(facilityData.hubs).forEach(prov => {
+                        facilityData.hubs[prov].forEach(h => {
+                            if (facilityData.districts[h] && facilityData.districts[h].includes(district)) {
+                                province = prov;
+                                hub = h;
+                            }
+                        });
+                    });
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${facility}</td>
+                        <td>FAC${Math.random().toString(36).substr(2, 6).toUpperCase()}</td>
+                        <td>${district}</td>
+                        <td>${hub}</td>
+                        <td>${province}</td>
+                        <td>
+                            <button class="btn btn-warning" onclick="editFacility('${facility}')">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteFacility('${facility}', '${district}')">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            });
+        }
+
+        function loadCommoditiesTable() {
+            const tbody = document.getElementById('commoditiesTableBody');
+            tbody.innerHTML = '';
+            
+            commodities.forEach(commodity => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${commodity.category}</td>
+                    <td>${commodity.name}</td>
+                    <td>${commodity.description}</td>
+                    <td>${commodity.unit}</td>
+                    <td>
+                        <button class="btn btn-warning" onclick="editCommodity(${commodity.id})">Edit</button>
+                        <button class="btn btn-danger" onclick="deleteCommodity(${commodity.id})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // User management functions
+        function approveUser(userId) {
+            const user = users.find(u => u.id === userId);
+            if (user) {
+                user.status = 'approved';
+                showAlert(`User ${user.fullName} approved successfully`, 'success');
+                loadUsersTable();
+            }
+        }
+
+        function rejectUser(userId) {
+            const user = users.find(u => u.id === userId);
+            if (user) {
+                user.status = 'rejected';
+                showAlert(`User ${user.fullName} rejected`, 'warning');
+                loadUsersTable();
+            }
+        }
+
+        function deleteUser(userId) {
+            if (confirm('Are you sure you want to delete this user?')) {
+                const index = users.findIndex(u => u.id === userId);
+                if (index > -1) {
+                    users.splice(index, 1);
+                    showAlert('User deleted successfully', 'success');
+                    loadUsersTable();
+                }
+            }
+        }
+
+        // Facility management functions
+        function addFacility() {
+            const facilityData = {
+                name: document.getElementById('newFacilityName').value,
+                code: document.getElementById('newFacilityCode').value,
+                province: document.getElementById('newFacilityProvince').value,
+                hub: document.getElementById('newFacilityHub').value,
+                district: document.getElementById('newFacilityDistrict').value
+            };
+
+            // Validate required fields
+            for (let field in facilityData) {
+                if (!facilityData[field]) {
+                    showAlert(`Please fill in ${field}`, 'error');
+                    return;
+                }
+            }
+
+            // Add facility to the district
+            if (!window.facilityData.facilities[facilityData.district]) {
+                window.facilityData.facilities[facilityData.district] = [];
+            }
+            window.facilityData.facilities[facilityData.district].push(facilityData.name);
+
+            showAlert('Facility added successfully', 'success');
+            loadFacilitiesTable();
+
+            // Clear form
+            document.querySelectorAll('#manageFacilitiesSection input, #manageFacilitiesSection select').forEach(input => {
+                input.value = '';
+            });
+        }
+
+        function editFacility(facilityName) {
+            // In a real application, this would open an edit modal
+            const newName = prompt('Enter new facility name:', facilityName);
+            if (newName && newName !== facilityName) {
+                // Update facility name in data structure
+                Object.keys(facilityData.facilities).forEach(district => {
+                    const index = facilityData.facilities[district].indexOf(facilityName);
+                    if (index > -1) {
+                        facilityData.facilities[district][index] = newName;
+                    }
+                });
+                showAlert('Facility updated successfully', 'success');
+                loadFacilitiesTable();
+            }
+        }
+
+        function deleteFacility(facilityName, district) {
+            if (confirm(`Are you sure you want to delete ${facilityName}?`)) {
+                const index = facilityData.facilities[district].indexOf(facilityName);
+                if (index > -1) {
+                    facilityData.facilities[district].splice(index, 1);
+                    showAlert('Facility deleted successfully', 'success');
+                    loadFacilitiesTable();
+                }
+            }
+        }
+
+        // Commodity management functions
+        function addCommodity() {
+            const commodityData = {
+                id: commodities.length + 1,
+                category: document.getElementById('newCommodityCategory').value,
+                name: document.getElementById('newCommodityName').value,
+                description: document.getElementById('newCommodityDescription').value,
+                unit: document.getElementById('newCommodityUnit').value
+            };
+
+            // Validate required fields
+            for (let field in commodityData) {
+                if (field !== 'id' && !commodityData[field]) {
+                    showAlert(`Please fill in ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`, 'error');
+                    return;
+                }
+            }
+
+            commodities.push(commodityData);
+            showAlert('Commodity added successfully', 'success');
+            loadCommoditiesTable();
+            generateCommodityReportForm(); // Refresh the report form
+
+            // Clear form
+            document.querySelectorAll('#manageCommoditiesSection input, #manageCommoditiesSection select, #manageCommoditiesSection textarea').forEach(input => {
+                input.value = '';
+            });
+        }
+
+        function editCommodity(commodityId) {
+            const commodity = commodities.find(c => c.id === commodityId);
+            if (commodity) {
+                // In a real application, this would open an edit modal
+                const newName = prompt('Enter new commodity name:', commodity.name);
+                if (newName && newName !== commodity.name) {
+                    commodity.name = newName;
+                    showAlert('Commodity updated successfully', 'success');
+                    loadCommoditiesTable();
+                    generateCommodityReportForm();
+                }
+            }
+        }
+
+        function deleteCommodity(commodityId) {
+            if (confirm('Are you sure you want to delete this commodity?')) {
+                const index = commodities.findIndex(c => c.id === commodityId);
+                if (index > -1) {
+                    commodities.splice(index, 1);
+                    showAlert('Commodity deleted successfully', 'success');
+                    loadCommoditiesTable();
+                    generateCommodityReportForm();
+                }
+            }
+        }
+
+        // Report management functions
+        function filterReports() {
+            const statusFilter = document.getElementById('reportStatusFilter').value;
+            // Implementation would filter the reports table based on status
+            loadReportsTable();
+        }
+
+        function viewReport(reportId) {
+            const report = reports.find(r => r.id === reportId);
+            if (report) {
+                // In a real application, this would open a detailed view modal
+                alert(`Viewing report ${reportId} for ${report.facility}\nWeek: ${report.week}\nStatus: ${report.status}`);
+            }
+        }
+
+        function downloadReport(reportId, format) {
+            const report = reports.find(r => r.id === reportId);
+            if (report) {
+                showAlert(`Downloading report ${reportId} as ${format.toUpperCase()}`, 'success');
+                // In a real application, this would generate and download the actual file
+            }
+        }
+
+        function approveReport(reportId) {
+            const report = reports.find(r => r.id === reportId);
+            if (report) {
+                report.status = 'approved';
+                showAlert(`Report ${reportId} approved successfully`, 'success');
+                loadReportsTable();
+            }
+        }
+
+        function rejectReport(reportId) {
+            const report = reports.find(r => r.id === reportId);
+            if (report) {
+                const reason = prompt('Enter reason for rejection:');
+                if (reason) {
+                    report.status = 'rejected';
+                    report.rejectionReason = reason;
+                    showAlert(`Report ${reportId} rejected`, 'warning');
+                    loadReportsTable();
+                }
+            }
+        }
+
+        // Utility functions
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            alertContainer.appendChild(alert);
+            
+            // Remove alert after 5 seconds
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        function goBack() {
+            // Simple back functionality - in a real app, this would use proper navigation
+            history.back();
+        }
+
+        // Validation functions
+        function validateInput(input, type) {
+            switch (type) {
+                case 'number':
+                    return !isNaN(input) && input >= 0;
+                case 'date':
+                    return new Date(input) > new Date();
+                case 'required':
+                    return input && input.trim().length > 0;
+                default:
+                    return true;
+            }
+        }
+
+        // Initialize application when page loads
+        window.addEventListener('load', initApp);
+
+        // Prevent form submission on Enter key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && event.target.tagName !== 'TEXTAREA') {
+                event.preventDefault();
+            }
+        });
+
+        // Auto-save draft functionality
+        let autoSaveInterval;
+        function startAutoSave() {
+            autoSaveInterval = setInterval(() => {
+                if (document.getElementById('submitReportSection').classList.contains('active')) {
+                    // Auto-save logic would go here
+                    console.log('Auto-saving draft...');
+                }
+            }, 30000); // Auto-save every 30 seconds
+        }
+
+        function stopAutoSave() {
+            if (autoSaveInterval) {
+                clearInterval(autoSaveInterval);
+            }
+        }
+
+        // Export functions for global access
+        window.switchAuthTab = switchAuthTab;
+        window.signIn = signIn;
+        window.signUp = signUp;
+        window.logout = logout;
+        window.showSection = showSection;
+        window.loadHubs = loadHubs;
+        window.loadDistricts = loadDistricts;
+        window.loadFacilities = loadFacilities;
+        window.loadNewFacilityHubs = loadNewFacilityHubs;
+        window.loadNewFacilityDistricts = loadNewFacilityDistricts;
+        window.calculateBalance = calculateBalance;
+        window.previewReport = previewReport;
+        window.submitReport = submitReport;
+        window.saveAsDraft = saveAsDraft;
+        window.filterReports = filterReports;
+        window.viewReport = viewReport;
+        window.downloadReport = downloadReport;
+        window.approveReport = approveReport;
+        window.rejectReport = rejectReport;
+        window.approveUser = approveUser;
+        window.rejectUser = rejectUser;
+        window.deleteUser = deleteUser;
+        window.addFacility = addFacility;
+        window.editFacility = editFacility;
+        window.deleteFacility = deleteFacility;
+        window.addCommodity = addCommodity;
+        window.editCommodity = editCommodity;
+        window.deleteCommodity = deleteCommodity;
+    </script>
+</body>
+</html>
